@@ -208,3 +208,5 @@ __marimo__/
 
 # Local OpenCode workspace artifacts
 .opencode/
+.agents/
+skills-lock.json
