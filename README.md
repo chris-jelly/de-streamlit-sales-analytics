@@ -14,10 +14,16 @@ Internal Streamlit dashboard for Phase 1 sales pipeline analytics.
 
 ## Scope
 
-- Three tabs: `Overview`, `Forecast`, `History`
+- Three views: `Overview`, `Forecast`, `History` (single active view rendered per rerun)
 - Canonical marts only:
   - `fct_salesforce_opportunities`
   - `dim_salesforce_accounts`
   - `opportunity_history_snapshot`
+
+## UI and theming conventions
+
+- Native Streamlit theming is defined in `.streamlit/config.toml`
+- Global filters and app metadata live in the sidebar; charts and tables stay in the main area
+- Dashboard sections use bordered card/grouping patterns for consistency
 
 See `docs/runtime-contract.md` for runtime/deployment contract details.

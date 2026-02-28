@@ -9,19 +9,26 @@ from streamlit_app.metrics import kpis
 
 def render_overview(df: pd.DataFrame) -> None:
     metrics = kpis(df)
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Open Pipeline", f"${metrics['open_pipeline_amount']:,.0f}")
-    col2.metric("Weighted Pipeline", f"${metrics['weighted_pipeline_amount']:,.0f}")
-    col3.metric("Win Rate", f"{metrics['win_rate'] * 100:.1f}%")
-    col4.metric("Open Opportunities", f"{metrics['open_opportunity_count']:,.0f}")
+    with st.container(horizontal=True):
+        with st.container(border=True):
+            st.metric("Open Pipeline", f"${metrics['open_pipeline_amount']:,.0f}")
+        with st.container(border=True):
+            st.metric(
+                "Weighted Pipeline", f"${metrics['weighted_pipeline_amount']:,.0f}"
+            )
+        with st.container(border=True):
+            st.metric("Win Rate", f"{metrics['win_rate'] * 100:.1f}%")
+        with st.container(border=True):
+            st.metric("Open Opportunities", f"{metrics['open_opportunity_count']:,.0f}")
 
     stage_counts = (
         df.groupby("stage_name", dropna=False).size().reset_index(name="count")
     )
-    stage_fig = px.bar(
-        stage_counts, x="stage_name", y="count", title="Stage Distribution"
-    )
-    st.plotly_chart(stage_fig, use_container_width=True)
+    with st.container(border=True):
+        stage_fig = px.bar(
+            stage_counts, x="stage_name", y="count", title="Stage Distribution"
+        )
+        st.plotly_chart(stage_fig, use_container_width=True)
 
     table_columns = [
         "opportunity_name",
@@ -33,11 +40,12 @@ def render_overview(df: pd.DataFrame) -> None:
         "industry",
         "account_type",
     ]
-    st.subheader("Opportunities")
-    st.dataframe(
-        df[table_columns].sort_values("close_date", ascending=True),
-        use_container_width=True,
-    )
+    with st.container(border=True):
+        st.subheader("Opportunities")
+        st.dataframe(
+            df[table_columns].sort_values("close_date", ascending=True),
+            use_container_width=True,
+        )
 
 
 def render_forecast(df: pd.DataFrame) -> None:
@@ -52,13 +60,14 @@ def render_forecast(df: pd.DataFrame) -> None:
     month_agg = forecast.groupby("close_month", dropna=False, as_index=False)[
         "weighted_amount"
     ].sum()
-    month_fig = px.bar(
-        month_agg,
-        x="close_month",
-        y="weighted_amount",
-        title="Weighted Pipeline by Close Month",
-    )
-    st.plotly_chart(month_fig, use_container_width=True)
+    with st.container(border=True):
+        month_fig = px.bar(
+            month_agg,
+            x="close_month",
+            y="weighted_amount",
+            title="Weighted Pipeline by Close Month",
+        )
+        st.plotly_chart(month_fig, use_container_width=True)
 
     today = pd.Timestamp.utcnow().normalize()
     days_to_close = (pd.to_datetime(forecast["close_date"]) - today).dt.days
@@ -70,13 +79,14 @@ def render_forecast(df: pd.DataFrame) -> None:
     bucket_agg = forecast.groupby("close_date_bucket", dropna=False, as_index=False)[
         "weighted_amount"
     ].sum()
-    bucket_fig = px.bar(
-        bucket_agg,
-        x="close_date_bucket",
-        y="weighted_amount",
-        title="Weighted Pipeline by Close-Date Bucket",
-    )
-    st.plotly_chart(bucket_fig, use_container_width=True)
+    with st.container(border=True):
+        bucket_fig = px.bar(
+            bucket_agg,
+            x="close_date_bucket",
+            y="weighted_amount",
+            title="Weighted Pipeline by Close-Date Bucket",
+        )
+        st.plotly_chart(bucket_fig, use_container_width=True)
 
 
 def render_history(df: pd.DataFrame) -> None:
@@ -91,21 +101,25 @@ def render_history(df: pd.DataFrame) -> None:
         "weighted_amount"
     ].sum()
 
-    trend_fig = px.line(
-        pipeline_trend, x="snapshot_date", y="amount", title="Pipeline Trend"
-    )
-    weighted_fig = px.line(
-        weighted_trend,
-        x="snapshot_date",
-        y="weighted_amount",
-        title="Weighted Pipeline Trend",
-    )
-    st.plotly_chart(trend_fig, use_container_width=True)
-    st.plotly_chart(weighted_fig, use_container_width=True)
+    with st.container(border=True):
+        trend_fig = px.line(
+            pipeline_trend, x="snapshot_date", y="amount", title="Pipeline Trend"
+        )
+        st.plotly_chart(trend_fig, use_container_width=True)
+
+    with st.container(border=True):
+        weighted_fig = px.line(
+            weighted_trend,
+            x="snapshot_date",
+            y="weighted_amount",
+            title="Weighted Pipeline Trend",
+        )
+        st.plotly_chart(weighted_fig, use_container_width=True)
 
     movers = _daily_movers(history)
-    st.subheader("Daily Movers")
-    st.dataframe(movers, use_container_width=True)
+    with st.container(border=True):
+        st.subheader("Daily Movers")
+        st.dataframe(movers, use_container_width=True)
 
 
 def _daily_movers(history: pd.DataFrame) -> pd.DataFrame:

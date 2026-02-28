@@ -8,7 +8,7 @@ The system SHALL provide a Phase 1 Streamlit dashboard for internal sales pipeli
 
 #### Scenario: Dashboard information architecture is constrained
 - **WHEN** Phase 1 is implemented
-- **THEN** the app SHALL include exactly three primary tabs: `Overview`, `Forecast`, and `History`
+- **THEN** the app SHALL expose exactly three primary analytical views named `Overview`, `Forecast`, and `History`, and SHALL activate only one heavy view renderer at a time
 
 #### Scenario: MVP visual scope is constrained
 - **WHEN** Phase 1 is implemented
@@ -49,7 +49,7 @@ The dashboard SHALL use documented canonical metric definitions for all Phase 1 
 - **THEN** all views SHALL use the same canonical formulas and filter semantics
 
 ### Requirement: Global filter behavior is consistent
-The dashboard SHALL apply a shared filter model across tabs and visuals.
+The dashboard SHALL apply a shared filter model across views and visuals.
 
 #### Scenario: Supported global filters
 - **WHEN** the app is in use
@@ -59,9 +59,9 @@ The dashboard SHALL apply a shared filter model across tabs and visuals.
 - **WHEN** filter predicates are applied
 - **THEN** date range SHALL use `fct_salesforce_opportunities.close_date`, stage SHALL use `fct_salesforce_opportunities.stage_name`, industry SHALL use `dim_salesforce_accounts.industry`, and account type SHALL use `dim_salesforce_accounts.account_type`
 
-#### Scenario: Cross-tab filter consistency
+#### Scenario: Cross-view filter consistency
 - **WHEN** a user updates any global filter
-- **THEN** all relevant charts, KPI cards, and tables across tabs SHALL update consistently
+- **THEN** all relevant charts, KPI cards, and tables across `Overview`, `Forecast`, and `History` SHALL update consistently
 
 ### Requirement: Data freshness is visible
 The dashboard SHALL show users when underlying data was last refreshed.

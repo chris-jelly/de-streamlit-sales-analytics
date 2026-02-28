@@ -11,6 +11,8 @@ from streamlit_app.filters import apply_global_filters, read_sidebar_filters
 from streamlit_app.freshness import format_freshness, select_freshness
 from streamlit_app.tabs import render_forecast, render_history, render_overview
 
+VIEW_NAMES = ("Overview", "Forecast", "History")
+
 
 @st.cache_resource
 def get_client() -> WarehouseClient:
@@ -24,6 +26,34 @@ def load_data(start_date: date, end_date: date) -> tuple[pd.DataFrame, pd.DataFr
     fact = client.fetch_current_fact(start_date=start_date, end_date=end_date)
     history = client.fetch_history_snapshot(start_date=start_date, end_date=end_date)
     return fact, history
+
+
+def render_selected_view(
+    selected_view: str,
+    filtered_fact: pd.DataFrame,
+    filtered_history: pd.DataFrame,
+    fact_raw_freshness: pd.Timestamp | None,
+    history_snapshot_freshness: pd.Timestamp | None,
+    fallback_freshness: pd.Timestamp | None,
+) -> None:
+    freshness = select_freshness(
+        selected_view,
+        fact_raw_freshness,
+        history_snapshot_freshness,
+        fallback_freshness,
+    )
+    st.caption(format_freshness(freshness))
+
+    if selected_view == "Overview":
+        render_overview(filtered_fact)
+        return
+    if selected_view == "Forecast":
+        render_forecast(filtered_fact)
+        return
+    if selected_view == "History":
+        render_history(filtered_history)
+        return
+    raise ValueError(f"Unsupported dashboard view: {selected_view}")
 
 
 def main() -> None:
@@ -53,6 +83,7 @@ def main() -> None:
         st.stop()
 
     filter_state = read_sidebar_filters(fact_df)
+    st.sidebar.caption(f"Environment: {settings.app_env}")
     filtered_fact = apply_global_filters(fact_df, filter_state)
     filtered_history = apply_global_filters(history_df, filter_state)
 
@@ -60,39 +91,16 @@ def main() -> None:
     history_snapshot_freshness = client.freshness_history_snapshot_date()
     fallback_freshness = client.freshness_fallback_source_modified()
 
-    tab_overview, tab_forecast, tab_history = st.tabs(
-        ["Overview", "Forecast", "History"]
+    selected_view = st.radio("View", options=VIEW_NAMES, horizontal=True)
+
+    render_selected_view(
+        selected_view,
+        filtered_fact,
+        filtered_history,
+        fact_raw_freshness,
+        history_snapshot_freshness,
+        fallback_freshness,
     )
-
-    with tab_overview:
-        freshness = select_freshness(
-            "Overview",
-            fact_raw_freshness,
-            history_snapshot_freshness,
-            fallback_freshness,
-        )
-        st.caption(format_freshness(freshness))
-        render_overview(filtered_fact)
-
-    with tab_forecast:
-        freshness = select_freshness(
-            "Forecast",
-            fact_raw_freshness,
-            history_snapshot_freshness,
-            fallback_freshness,
-        )
-        st.caption(format_freshness(freshness))
-        render_forecast(filtered_fact)
-
-    with tab_history:
-        freshness = select_freshness(
-            "History",
-            fact_raw_freshness,
-            history_snapshot_freshness,
-            fallback_freshness,
-        )
-        st.caption(format_freshness(freshness))
-        render_history(filtered_history)
 
 
 if __name__ == "__main__":
