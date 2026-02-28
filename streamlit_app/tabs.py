@@ -1,7 +1,5 @@
 """Tab renderers for the Streamlit dashboard."""
 
-from __future__ import annotations
-
 import pandas as pd
 import plotly.express as px
 import streamlit as st

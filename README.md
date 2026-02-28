@@ -4,13 +4,13 @@ Internal Streamlit dashboard for Phase 1 sales pipeline analytics.
 
 ## Local run
 
-1. Create a Python 3.11 environment.
-2. Install dependencies:
-   - `pip install -r requirements.txt`
+1. Create a Python 3.13+ environment.
+2. Install dependencies with uv:
+   - `uv sync --extra dev`
 3. Set required env var:
    - `SALES_WAREHOUSE_URL` (read-only warehouse connection URL)
 4. Run:
-   - `streamlit run streamlit_app/app.py`
+   - `uv run streamlit run streamlit_app/app.py`
 
 ## Scope
 

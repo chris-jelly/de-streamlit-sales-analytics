@@ -1,7 +1,5 @@
 """Global filter state and application."""
 
-from __future__ import annotations
-
 from dataclasses import dataclass
 from datetime import date
 

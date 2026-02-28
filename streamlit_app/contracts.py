@@ -1,7 +1,5 @@
 """Canonical model and field contracts for Phase 1."""
 
-from __future__ import annotations
-
 MODEL_NAMES = {
     "fact": "fct_salesforce_opportunities",
     "accounts": "dim_salesforce_accounts",

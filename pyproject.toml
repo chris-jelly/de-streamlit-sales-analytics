@@ -6,7 +6,23 @@ build-backend = "setuptools.build_meta"
 name = "streamlit-sales-analytics"
 version = "0.1.0"
 description = "Phase 1 Streamlit sales pipeline dashboard"
-requires-python = ">=3.11"
+requires-python = ">=3.13"
+dependencies = [
+    "streamlit==1.42.2",
+    "pandas==2.2.3",
+    "plotly==5.24.1",
+    "SQLAlchemy==2.0.38",
+    "psycopg[binary]==3.2.5",
+    "python-dotenv==1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.5",
+]
+
+[tool.setuptools]
+packages = ["streamlit_app"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

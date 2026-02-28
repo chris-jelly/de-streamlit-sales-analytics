@@ -1,7 +1,5 @@
 """Warehouse access restricted to approved marts."""
 
-from __future__ import annotations
-
 from datetime import date
 
 import pandas as pd

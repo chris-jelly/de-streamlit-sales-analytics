@@ -1,7 +1,5 @@
 """Basic healthcheck utility for container/runtime probes."""
 
-from __future__ import annotations
-
 import argparse
 import sys
 import urllib.request

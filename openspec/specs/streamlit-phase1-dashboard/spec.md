@@ -83,7 +83,7 @@ The dashboard SHALL show users when underlying data was last refreshed.
 - **THEN** the app SHALL fallback to `max(fct_salesforce_opportunities.source_last_modified_at)` and SHALL label the freshness indicator as approximate
 
 ### Requirement: Container image build is managed in repository CI
-The system SHALL provide a CI workflow in this repository to build a deployable Streamlit container image for Phase 1.
+The system SHALL provide a CI workflow in this repository to build a deployable Streamlit container image for Phase 1 using a Python 3.13+ runtime baseline.
 
 #### Scenario: CI builds deployable image
 - **WHEN** the default branch or a release build is triggered
@@ -92,6 +92,21 @@ The system SHALL provide a CI workflow in this repository to build a deployable 
 #### Scenario: Build artifact is publishable for homelab deployment
 - **WHEN** CI build succeeds
 - **THEN** the produced image SHALL be tagged and published to the configured registry for consumption by homelab deployment manifests
+
+#### Scenario: CI test job enforces runtime floor
+- **WHEN** repository tests run in CI
+- **THEN** the workflow SHALL execute tests using Python 3.13 or newer
+
+#### Scenario: Container build uses uv for dependency installation
+- **WHEN** the Streamlit container image is built from repository Docker assets
+- **THEN** Python dependencies SHALL be installed with `uv` rather than `pip`, using repository `pyproject.toml` and `uv.lock` as dependency sources
+
+### Requirement: Runtime contract declares Python 3.13+ baseline
+The Phase 1 runtime contract SHALL explicitly document Python 3.13+ as the minimum supported runtime for this dashboard.
+
+#### Scenario: Runtime contract version statement exists
+- **WHEN** runtime contract and onboarding docs are reviewed
+- **THEN** they SHALL state that Python 3.13+ is required for local and container execution
 
 ### Requirement: Kubernetes runtime contract is internal-only for Phase 1
 The app runtime contract SHALL target Kubernetes with internal-only ingress exposure for Phase 1.

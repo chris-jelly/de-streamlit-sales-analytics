@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from datetime import datetime
 
 from streamlit_app.freshness import format_freshness, select_freshness

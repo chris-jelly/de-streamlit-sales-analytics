@@ -2,6 +2,11 @@
 
 This repository defines the app runtime contract consumed by homelab deployment manifests.
 
+## Runtime baseline
+
+- Python: `3.13+`
+- Dependency manager: `uv` (`pyproject.toml` + `uv.lock`)
+
 ## Environment and secrets
 
 - `SALES_WAREHOUSE_URL` (required): read-only warehouse connection URL.
