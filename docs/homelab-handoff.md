@@ -5,7 +5,7 @@ Use this when wiring deployment YAML in `~/git/homelab`.
 ## Image coordinates
 
 - Registry: `ghcr.io`
-- Image: `ghcr.io/<org-or-user>/de-streamlit-sales-analytics/streamlit-sales-pipeline-pulse`
+- Image: `ghcr.io/chris-jelly/de-streamlit-sales-analytics/streamlit-sales-pipeline-pulse`
 - Tags produced by CI:
   - branch tag
   - commit sha tag
@@ -13,7 +13,9 @@ Use this when wiring deployment YAML in `~/git/homelab`.
 
 ## Required secret keys
 
-- `SALES_WAREHOUSE_URL`: DSN/URL for dedicated read-only warehouse user.
+- `SALES_WAREHOUSE_URL`: SQLAlchemy Postgres DSN/URL for dedicated read-only warehouse user.
+  - Expected driver prefix: `postgresql+psycopg://`
+  - CNPG service pattern: `postgresql+psycopg://<user>:<password>@<cluster-name>-rw.<namespace>.svc.cluster.local:5432/<database>?sslmode=require`
 
 ## Runtime env defaults
 
