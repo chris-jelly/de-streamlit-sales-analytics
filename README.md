@@ -7,10 +7,22 @@ Internal Streamlit dashboard for Phase 1 sales pipeline analytics.
 1. Create a Python 3.13+ environment.
 2. Install dependencies with uv:
    - `uv sync --extra dev`
-3. Set required env var:
-   - `SALES_WAREHOUSE_URL` (read-only warehouse connection URL)
-4. Run:
+3. Choose a backend mode:
+   - **SQLite dev mode (no secret):**
+     - Generate deterministic fixtures: `uv run python scripts/generate_dev_fixtures.py`
+      - Set env vars:
+        - `APP_ENV=dev`
+        - `DATA_BACKEND=sqlite`
+        - Optional: `LOCAL_FIXTURE_DIR=fixtures/sales_seed`
+        - Optional: `LOCAL_SQLITE_URL` (defaults to persistent `.streamlit/dev-local.db`)
+   - **Warehouse mode:**
+     - Set env vars:
+       - `DATA_BACKEND=warehouse`
+       - `SALES_WAREHOUSE_URL` (read-only warehouse connection URL)
+4. Run the app:
    - `uv run streamlit run streamlit_app/app.py`
+
+See `docs/dev-fixtures.md` for fixture schema shape and edge-case coverage.
 
 ## Scope
 

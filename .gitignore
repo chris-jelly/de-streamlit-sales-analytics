@@ -210,3 +210,6 @@ __marimo__/
 .opencode/
 .agents/
 skills-lock.json
+
+# Local Streamlit runtime database
+.streamlit/dev-local.db

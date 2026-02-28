@@ -9,7 +9,10 @@ This repository defines the app runtime contract consumed by homelab deployment 
 
 ## Environment and secrets
 
-- `SALES_WAREHOUSE_URL` (required): read-only warehouse connection URL.
+- `DATA_BACKEND` (optional, default: `sqlite` in `APP_ENV=dev`, otherwise `warehouse`): data backend selection (`warehouse` or `sqlite`).
+- `SALES_WAREHOUSE_URL` (required for `DATA_BACKEND=warehouse`): read-only warehouse connection URL.
+- `LOCAL_FIXTURE_DIR` (optional, default `fixtures/sales_seed`): local fixture parquet directory for SQLite dev mode.
+- `LOCAL_SQLITE_URL` (optional, default `sqlite+pysqlite:///.streamlit/dev-local.db`): SQLAlchemy URL used for local SQLite backend.
 - `APP_ENV` (optional, default `dev`)
 - `APP_TITLE` (optional, default `Sales Pipeline Pulse - Phase 1`)
 - `STREAMLIT_PORT` (optional, default `8501`)

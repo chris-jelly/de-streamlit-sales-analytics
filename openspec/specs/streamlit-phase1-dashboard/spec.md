@@ -120,7 +120,7 @@ The app runtime contract SHALL target Kubernetes with internal-only ingress expo
 - **THEN** environment-specific deployment YAML in `~/git/homelab` SHALL be excluded from this change
 
 ### Requirement: Secrets and database access follow least privilege
-The app SHALL use External Secrets Operator integration and least-privilege credentials for warehouse access.
+The app SHALL use least-privilege credentials for warehouse access in deployed environments and SHALL support secretless local development through deterministic SQLite fixtures.
 
 #### Scenario: Read-only warehouse credentials
 - **WHEN** database credentials are provisioned for the app
@@ -129,6 +129,10 @@ The app SHALL use External Secrets Operator integration and least-privilege cred
 #### Scenario: Secret delivery mechanism
 - **WHEN** app runtime secrets are provided in Kubernetes
 - **THEN** they SHALL be delivered via External Secrets Operator-managed Kubernetes Secrets
+
+#### Scenario: Secretless local development mode
+- **WHEN** the app runs in local development mode without warehouse credentials
+- **THEN** the dashboard SHALL run using deterministic local fixture data and SHALL NOT require secret delivery infrastructure
 
 ### Requirement: Baseline runtime operability is included
 The Phase 1 runtime contract SHALL include basic health and resource requests for Kubernetes deployment.

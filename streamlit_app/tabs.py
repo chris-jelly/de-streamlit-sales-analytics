@@ -9,17 +9,15 @@ from streamlit_app.metrics import kpis
 
 def render_overview(df: pd.DataFrame) -> None:
     metrics = kpis(df)
-    with st.container(horizontal=True):
-        with st.container(border=True):
-            st.metric("Open Pipeline", f"${metrics['open_pipeline_amount']:,.0f}")
-        with st.container(border=True):
-            st.metric(
-                "Weighted Pipeline", f"${metrics['weighted_pipeline_amount']:,.0f}"
-            )
-        with st.container(border=True):
-            st.metric("Win Rate", f"{metrics['win_rate'] * 100:.1f}%")
-        with st.container(border=True):
-            st.metric("Open Opportunities", f"{metrics['open_opportunity_count']:,.0f}")
+    metric_cols = st.columns(4)
+    with metric_cols[0].container(border=True):
+        st.metric("Open Pipeline", f"${metrics['open_pipeline_amount']:,.0f}")
+    with metric_cols[1].container(border=True):
+        st.metric("Weighted Pipeline", f"${metrics['weighted_pipeline_amount']:,.0f}")
+    with metric_cols[2].container(border=True):
+        st.metric("Win Rate", f"{metrics['win_rate'] * 100:.1f}%")
+    with metric_cols[3].container(border=True):
+        st.metric("Open Opportunities", f"{metrics['open_opportunity_count']:,.0f}")
 
     stage_counts = (
         df.groupby("stage_name", dropna=False).size().reset_index(name="count")
@@ -69,7 +67,7 @@ def render_forecast(df: pd.DataFrame) -> None:
         )
         st.plotly_chart(month_fig, use_container_width=True)
 
-    today = pd.Timestamp.utcnow().normalize()
+    today = pd.Timestamp.now().normalize()
     days_to_close = (pd.to_datetime(forecast["close_date"]) - today).dt.days
     forecast["close_date_bucket"] = pd.cut(
         days_to_close,

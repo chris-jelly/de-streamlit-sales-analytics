@@ -13,6 +13,7 @@ dependencies = [
     "plotly==5.24.1",
     "SQLAlchemy==2.0.38",
     "psycopg[binary]==3.2.5",
+    "pyarrow==19.0.1",
     "python-dotenv==1.0.1",
 ]
 

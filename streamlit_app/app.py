@@ -5,8 +5,8 @@ from datetime import date, timedelta
 import pandas as pd
 import streamlit as st
 
-from streamlit_app.config import from_env
-from streamlit_app.data_access import ContractValidationError, WarehouseClient
+from streamlit_app.config import Settings, from_env
+from streamlit_app.data_access import ContractValidationError, DataClient, create_client
 from streamlit_app.filters import apply_global_filters, read_sidebar_filters
 from streamlit_app.freshness import format_freshness, select_freshness
 from streamlit_app.tabs import render_forecast, render_history, render_overview
@@ -15,14 +15,14 @@ VIEW_NAMES = ("Overview", "Forecast", "History")
 
 
 @st.cache_resource
-def get_client() -> WarehouseClient:
-    settings = from_env()
-    return WarehouseClient.from_settings(settings)
+def get_client(settings: Settings) -> DataClient:
+    return create_client(settings)
 
 
 @st.cache_data(ttl=300)
 def load_data(start_date: date, end_date: date) -> tuple[pd.DataFrame, pd.DataFrame]:
-    client = get_client()
+    settings = from_env()
+    client = get_client(settings)
     fact = client.fetch_current_fact(start_date=start_date, end_date=end_date)
     history = client.fetch_history_snapshot(start_date=start_date, end_date=end_date)
     return fact, history
@@ -61,13 +61,19 @@ def main() -> None:
     st.set_page_config(page_title=settings.app_title, layout="wide")
     st.title(settings.app_title)
 
-    if not settings.db_url:
+    if settings.data_backend == "warehouse" and not settings.db_url:
         st.error(
-            "Missing SALES_WAREHOUSE_URL. Configure secrets/env before running the dashboard."
+            "Missing SALES_WAREHOUSE_URL for warehouse backend. "
+            "Set SALES_WAREHOUSE_URL, or in local dev use DATA_BACKEND=sqlite and APP_ENV=dev."
         )
         st.stop()
 
-    client = get_client()
+    try:
+        client = get_client(settings)
+    except ValueError as exc:
+        st.error(f"Backend configuration error: {exc}")
+        st.stop()
+
     try:
         client.validate_model_contracts()
     except ContractValidationError as exc:
