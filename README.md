@@ -15,10 +15,10 @@ Internal Streamlit dashboard for Phase 1 sales pipeline analytics.
         - `DATA_BACKEND=sqlite`
         - Optional: `LOCAL_FIXTURE_DIR=fixtures/sales_seed`
         - Optional: `LOCAL_SQLITE_URL` (defaults to persistent `.streamlit/dev-local.db`)
-   - **Warehouse mode:**
-     - Set env vars:
-       - `DATA_BACKEND=warehouse`
-       - `SALES_WAREHOUSE_URL` (read-only warehouse connection URL)
+    - **Warehouse mode:**
+      - Set env vars:
+        - `DATA_BACKEND=warehouse`
+        - `SALES_WAREHOUSE_URL` using `postgresql+psycopg://...` (read-only warehouse connection URL)
 4. Run the app:
    - `uv run streamlit run streamlit_app/app.py`
 

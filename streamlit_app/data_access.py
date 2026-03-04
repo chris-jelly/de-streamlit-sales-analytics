@@ -125,8 +125,7 @@ class BaseSqlClient:
 class WarehouseClient(BaseSqlClient):
     @classmethod
     def from_settings(cls, settings: Settings) -> "WarehouseClient":
-        if not settings.db_url:
-            raise ValueError("SALES_WAREHOUSE_URL is required")
+        _validate_warehouse_db_url(settings.db_url)
         return cls(engine=create_engine(settings.db_url))
 
 
@@ -188,6 +187,29 @@ def _create_sqlite_engine(sqlite_url: str) -> Engine:
             poolclass=StaticPool,
         )
     return create_engine(sqlite_url)
+
+
+def _validate_warehouse_db_url(db_url: str) -> None:
+    if not db_url:
+        raise ValueError("SALES_WAREHOUSE_URL is required")
+
+    required_prefix = "postgresql+psycopg://"
+    if db_url.startswith(required_prefix):
+        return
+
+    if db_url.startswith("postgresql://"):
+        raise ValueError(
+            "SALES_WAREHOUSE_URL must use postgresql+psycopg:// (psycopg v3). "
+            "Replace postgresql:// with postgresql+psycopg://."
+        )
+
+    if db_url.startswith("postgresql+psycopg2://"):
+        raise ValueError(
+            "SALES_WAREHOUSE_URL must use postgresql+psycopg:// (psycopg v3). "
+            "postgresql+psycopg2:// is not supported."
+        )
+
+    raise ValueError("SALES_WAREHOUSE_URL must use postgresql+psycopg:// (psycopg v3).")
 
 
 def _coerce_ts(value: object) -> pd.Timestamp | None:

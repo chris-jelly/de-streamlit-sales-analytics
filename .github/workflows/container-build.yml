@@ -26,6 +26,15 @@ jobs:
         run: uv sync --frozen --extra dev
       - name: Run tests
         run: uv run pytest -q
+      - name: Startup import smoke
+        run: |
+          set +e
+          APP_ENV=dev DATA_BACKEND=sqlite STREAMLIT_BROWSER_GATHER_USAGE_STATS=false timeout 20s uv run streamlit run streamlit_app/app.py --server.port=8501 --server.address=127.0.0.1
+          exit_code=$?
+          set -e
+          if [ "$exit_code" -ne 0 ] && [ "$exit_code" -ne 124 ]; then
+            exit "$exit_code"
+          fi
 
   build-and-publish:
     runs-on: ubuntu-latest

@@ -97,6 +97,54 @@ def test_create_client_requires_warehouse_url_for_warehouse_backend() -> None:
         create_client(settings)
 
 
+def test_create_client_accepts_psycopg3_warehouse_url() -> None:
+    settings = Settings(
+        db_url="postgresql+psycopg://user:pass@warehouse.example.com:5432/sales",
+        data_backend="warehouse",
+        local_fixture_dir="fixtures/sales_seed",
+        local_sqlite_url="sqlite+pysqlite:///:memory:",
+        app_env="prod",
+        app_title="Test",
+        streamlit_port=8501,
+        streamlit_address="0.0.0.0",
+    )
+
+    client = create_client(settings)
+    assert client is not None
+
+
+@pytest.mark.parametrize(
+    ("warehouse_url", "expected_error"),
+    [
+        (
+            "postgresql://user:pass@warehouse.example.com:5432/sales",
+            "Replace postgresql:// with postgresql",
+        ),
+        (
+            "postgresql+psycopg2://user:pass@warehouse.example.com:5432/sales",
+            "psycopg2:// is not supported",
+        ),
+    ],
+)
+def test_create_client_rejects_non_psycopg3_warehouse_urls(
+    warehouse_url: str,
+    expected_error: str,
+) -> None:
+    settings = Settings(
+        db_url=warehouse_url,
+        data_backend="warehouse",
+        local_fixture_dir="fixtures/sales_seed",
+        local_sqlite_url="sqlite+pysqlite:///:memory:",
+        app_env="prod",
+        app_title="Test",
+        streamlit_port=8501,
+        streamlit_address="0.0.0.0",
+    )
+
+    with pytest.raises(ValueError, match=expected_error):
+        create_client(settings)
+
+
 def test_local_contract_validation_fails_for_missing_required_columns(
     tmp_path: Path,
 ) -> None:

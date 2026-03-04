@@ -10,7 +10,8 @@ This repository defines the app runtime contract consumed by homelab deployment 
 ## Environment and secrets
 
 - `DATA_BACKEND` (optional, default: `sqlite` in `APP_ENV=dev`, otherwise `warehouse`): data backend selection (`warehouse` or `sqlite`).
-- `SALES_WAREHOUSE_URL` (required for `DATA_BACKEND=warehouse`): read-only warehouse connection URL.
+- `SALES_WAREHOUSE_URL` (required for `DATA_BACKEND=warehouse`): read-only warehouse connection URL using `postgresql+psycopg://...`.
+  - Bare `postgresql://...` and `postgresql+psycopg2://...` are rejected at startup.
 - `LOCAL_FIXTURE_DIR` (optional, default `fixtures/sales_seed`): local fixture parquet directory for SQLite dev mode.
 - `LOCAL_SQLITE_URL` (optional, default `sqlite+pysqlite:///.streamlit/dev-local.db`): SQLAlchemy URL used for local SQLite backend.
 - `APP_ENV` (optional, default `dev`)

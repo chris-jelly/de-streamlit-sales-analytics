@@ -14,7 +14,8 @@ Use this when wiring deployment YAML in `~/git/homelab`.
 ## Required secret keys
 
 - `SALES_WAREHOUSE_URL`: SQLAlchemy Postgres DSN/URL for dedicated read-only warehouse user.
-  - Expected driver prefix: `postgresql+psycopg://`
+  - Required driver prefix: `postgresql+psycopg://`
+  - `postgresql://` and `postgresql+psycopg2://` are intentionally rejected by app startup validation.
   - CNPG service pattern: `postgresql+psycopg://<user>:<password>@<cluster-name>-rw.<namespace>.svc.cluster.local:5432/<database>?sslmode=require`
 
 ## Runtime env defaults
