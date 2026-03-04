@@ -11,9 +11,8 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:0.6.6 /uv /uvx /bin/
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
-
 COPY streamlit_app ./streamlit_app
+RUN uv sync --frozen --no-dev
 
 ENV PATH="/app/.venv/bin:$PATH"
 
