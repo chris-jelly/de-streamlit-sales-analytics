@@ -21,6 +21,7 @@ Use this when wiring deployment YAML in `~/git/homelab`.
 ## Runtime env defaults
 
 - `APP_ENV=prod`
+- `WAREHOUSE_SCHEMA=marts`
 - `APP_TITLE=Sales Pipeline Pulse - Phase 1`
 - `STREAMLIT_PORT=8501`
 - `STREAMLIT_ADDRESS=0.0.0.0`

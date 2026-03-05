@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 @dataclass(frozen=True)
 class Settings:
     db_url: str
+    warehouse_schema: str
     data_backend: str
     local_fixture_dir: str
     local_sqlite_url: str
@@ -31,6 +32,7 @@ def from_env() -> Settings:
     )
     return Settings(
         db_url=os.getenv("SALES_WAREHOUSE_URL", ""),
+        warehouse_schema=os.getenv("WAREHOUSE_SCHEMA", "marts").strip(),
         data_backend=os.getenv("DATA_BACKEND", default_backend).strip().lower(),
         local_fixture_dir=os.getenv("LOCAL_FIXTURE_DIR", str(default_fixture_dir)),
         local_sqlite_url=os.getenv(

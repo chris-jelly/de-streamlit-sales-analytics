@@ -5,10 +5,11 @@ import pandas as pd
 import pytest
 
 from streamlit_app.config import Settings, from_env
-from streamlit_app.contracts import MODEL_NAMES
+from streamlit_app.contracts import MODEL_NAMES, REQUIRED_COLUMNS
 from streamlit_app.data_access import (
     ContractValidationError,
     LocalDevClient,
+    WarehouseClient,
     create_client,
 )
 from streamlit_app.dev_fixtures import generate_fixture_frames
@@ -34,6 +35,11 @@ def test_from_env_defaults_backend_by_app_env(monkeypatch: pytest.MonkeyPatch) -
     assert from_env().data_backend == "warehouse"
 
 
+def test_from_env_defaults_warehouse_schema(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("WAREHOUSE_SCHEMA", raising=False)
+    assert from_env().warehouse_schema == "marts"
+
+
 def test_create_client_local_sqlite_in_dev_without_warehouse_url(
     tmp_path: Path,
 ) -> None:
@@ -41,6 +47,7 @@ def test_create_client_local_sqlite_in_dev_without_warehouse_url(
     _write_fixture_dir(fixture_dir)
     settings = Settings(
         db_url="",
+        warehouse_schema="marts",
         data_backend="sqlite",
         local_fixture_dir=str(fixture_dir),
         local_sqlite_url="sqlite+pysqlite:///:memory:",
@@ -68,6 +75,7 @@ def test_create_client_rejects_sqlite_backend_outside_dev(tmp_path: Path) -> Non
     _write_fixture_dir(fixture_dir)
     settings = Settings(
         db_url="",
+        warehouse_schema="marts",
         data_backend="sqlite",
         local_fixture_dir=str(fixture_dir),
         local_sqlite_url="sqlite+pysqlite:///:memory:",
@@ -84,6 +92,7 @@ def test_create_client_rejects_sqlite_backend_outside_dev(tmp_path: Path) -> Non
 def test_create_client_requires_warehouse_url_for_warehouse_backend() -> None:
     settings = Settings(
         db_url="",
+        warehouse_schema="marts",
         data_backend="warehouse",
         local_fixture_dir="fixtures/sales_seed",
         local_sqlite_url="sqlite+pysqlite:///:memory:",
@@ -100,6 +109,7 @@ def test_create_client_requires_warehouse_url_for_warehouse_backend() -> None:
 def test_create_client_accepts_psycopg3_warehouse_url() -> None:
     settings = Settings(
         db_url="postgresql+psycopg://user:pass@warehouse.example.com:5432/sales",
+        warehouse_schema="marts",
         data_backend="warehouse",
         local_fixture_dir="fixtures/sales_seed",
         local_sqlite_url="sqlite+pysqlite:///:memory:",
@@ -132,6 +142,7 @@ def test_create_client_rejects_non_psycopg3_warehouse_urls(
 ) -> None:
     settings = Settings(
         db_url=warehouse_url,
+        warehouse_schema="marts",
         data_backend="warehouse",
         local_fixture_dir="fixtures/sales_seed",
         local_sqlite_url="sqlite+pysqlite:///:memory:",
@@ -152,6 +163,7 @@ def test_local_contract_validation_fails_for_missing_required_columns(
     _write_fixture_dir(fixture_dir, drop_fact_column="probability")
     settings = Settings(
         db_url="",
+        warehouse_schema="marts",
         data_backend="sqlite",
         local_fixture_dir=str(fixture_dir),
         local_sqlite_url="sqlite+pysqlite:///:memory:",
@@ -172,6 +184,7 @@ def test_local_bootstrap_errors_when_fixture_files_missing(tmp_path: Path) -> No
     pd.DataFrame({"foo": [1]}).to_parquet(fixture_dir / "foo.parquet", index=False)
     settings = Settings(
         db_url="",
+        warehouse_schema="marts",
         data_backend="sqlite",
         local_fixture_dir=str(fixture_dir),
         local_sqlite_url="sqlite+pysqlite:///:memory:",
@@ -183,3 +196,59 @@ def test_local_bootstrap_errors_when_fixture_files_missing(tmp_path: Path) -> No
 
     with pytest.raises(ValueError, match="Missing local fixture parquet files"):
         create_client(settings)
+
+
+def test_create_client_rejects_invalid_warehouse_schema() -> None:
+    settings = Settings(
+        db_url="postgresql+psycopg://user:pass@warehouse.example.com:5432/sales",
+        warehouse_schema="marts;drop schema raw_salesforce",
+        data_backend="warehouse",
+        local_fixture_dir="fixtures/sales_seed",
+        local_sqlite_url="sqlite+pysqlite:///:memory:",
+        app_env="prod",
+        app_title="Test",
+        streamlit_port=8501,
+        streamlit_address="0.0.0.0",
+    )
+
+    with pytest.raises(
+        ValueError, match="WAREHOUSE_SCHEMA must be a simple SQL identifier"
+    ):
+        create_client(settings)
+
+
+def test_warehouse_client_qualifies_all_model_tables() -> None:
+    client = WarehouseClient(
+        engine=None,
+        table_refs={  # type: ignore[arg-type]
+            MODEL_NAMES["fact"]: "marts.fct_salesforce_opportunities",
+            MODEL_NAMES["accounts"]: "marts.dim_salesforce_accounts",
+            MODEL_NAMES["history"]: "marts.opportunity_history_snapshot",
+        },
+    )
+    observed_sql: list[str] = []
+
+    def capture_query(sql: str, params: dict | None = None) -> pd.DataFrame:
+        del params
+        observed_sql.append(sql)
+        if "limit 0" in sql:
+            for model, required_columns in REQUIRED_COLUMNS.items():
+                if model in sql:
+                    return pd.DataFrame(columns=list(required_columns))
+            return pd.DataFrame()
+        if "snapshot_date" in sql or "freshness_ts" in sql:
+            return pd.DataFrame({"freshness_ts": [None]})
+        return pd.DataFrame()
+
+    client._query = capture_query  # type: ignore[method-assign]
+    client.validate_model_contracts()
+    client.fetch_current_fact(date(2025, 1, 1), date(2027, 1, 1))
+    client.fetch_history_snapshot(date(2025, 1, 1), date(2027, 1, 1))
+    client.freshness_fact_raw_extracted_at()
+    client.freshness_history_snapshot_date()
+    client.freshness_fallback_source_modified()
+
+    joined_sql = "\n".join(observed_sql)
+    assert "marts.fct_salesforce_opportunities" in joined_sql
+    assert "marts.dim_salesforce_accounts" in joined_sql
+    assert "marts.opportunity_history_snapshot" in joined_sql

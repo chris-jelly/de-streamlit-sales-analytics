@@ -19,6 +19,7 @@ Internal Streamlit dashboard for Phase 1 sales pipeline analytics.
       - Set env vars:
         - `DATA_BACKEND=warehouse`
         - `SALES_WAREHOUSE_URL` using `postgresql+psycopg://...` (read-only warehouse connection URL)
+        - Optional: `WAREHOUSE_SCHEMA` (defaults to `marts`)
 4. Run the app:
    - `uv run streamlit run streamlit_app/app.py`
 

@@ -34,8 +34,14 @@ class DataClient(Protocol):
 
 
 class BaseSqlClient:
-    def __init__(self, engine: Engine) -> None:
+    def __init__(
+        self, engine: Engine, table_refs: dict[str, str] | None = None
+    ) -> None:
         self.engine = engine
+        self.table_refs = table_refs or {name: name for name in MODEL_NAMES.values()}
+
+    def _table(self, name: str) -> str:
+        return self.table_refs.get(name, name)
 
     def _query(self, sql: str, params: dict | None = None) -> pd.DataFrame:
         with self.engine.begin() as conn:
@@ -43,7 +49,7 @@ class BaseSqlClient:
 
     def validate_model_contracts(self) -> None:
         for model, required_cols in REQUIRED_COLUMNS.items():
-            df = self._query(f"select * from {model} limit 0")
+            df = self._query(f"select * from {self._table(model)} limit 0")
             missing = required_cols.difference(set(df.columns))
             if missing:
                 missing_cols = ", ".join(sorted(missing))
@@ -71,8 +77,8 @@ class BaseSqlClient:
                 f.raw_extracted_at,
                 a.industry,
                 a.account_type
-            from {MODEL_NAMES["fact"]} as f
-            left join {MODEL_NAMES["accounts"]} as a
+            from {self._table(MODEL_NAMES["fact"])} as f
+            left join {self._table(MODEL_NAMES["accounts"])} as a
                 on f.{JOIN_CONTRACT["left_key"]} = a.{JOIN_CONTRACT["right_key"]}
             where f.close_date between :start_date and :end_date
             """,
@@ -93,10 +99,10 @@ class BaseSqlClient:
                 f.account_id,
                 a.industry,
                 a.account_type
-            from {MODEL_NAMES["history"]} as h
-            left join {MODEL_NAMES["fact"]} as f
+            from {self._table(MODEL_NAMES["history"])} as h
+            left join {self._table(MODEL_NAMES["fact"])} as f
                 on h.opportunity_id = f.opportunity_id
-            left join {MODEL_NAMES["accounts"]} as a
+            left join {self._table(MODEL_NAMES["accounts"])} as a
                 on f.{JOIN_CONTRACT["left_key"]} = a.{JOIN_CONTRACT["right_key"]}
             where h.close_date between :start_date and :end_date
             """,
@@ -105,19 +111,19 @@ class BaseSqlClient:
 
     def freshness_fact_raw_extracted_at(self) -> pd.Timestamp | None:
         df = self._query(
-            f"select max(raw_extracted_at) as freshness_ts from {MODEL_NAMES['fact']}"
+            f"select max(raw_extracted_at) as freshness_ts from {self._table(MODEL_NAMES['fact'])}"
         )
         return _coerce_ts(df["freshness_ts"][0])
 
     def freshness_history_snapshot_date(self) -> pd.Timestamp | None:
         df = self._query(
-            f"select max(snapshot_date) as freshness_ts from {MODEL_NAMES['history']}"
+            f"select max(snapshot_date) as freshness_ts from {self._table(MODEL_NAMES['history'])}"
         )
         return _coerce_ts(df["freshness_ts"][0])
 
     def freshness_fallback_source_modified(self) -> pd.Timestamp | None:
         df = self._query(
-            f"select max(source_last_modified_at) as freshness_ts from {MODEL_NAMES['fact']}"
+            f"select max(source_last_modified_at) as freshness_ts from {self._table(MODEL_NAMES['fact'])}"
         )
         return _coerce_ts(df["freshness_ts"][0])
 
@@ -126,7 +132,9 @@ class WarehouseClient(BaseSqlClient):
     @classmethod
     def from_settings(cls, settings: Settings) -> "WarehouseClient":
         _validate_warehouse_db_url(settings.db_url)
-        return cls(engine=create_engine(settings.db_url))
+        schema = _validate_warehouse_schema(settings.warehouse_schema)
+        table_refs = {name: f"{schema}.{name}" for name in MODEL_NAMES.values()}
+        return cls(engine=create_engine(settings.db_url), table_refs=table_refs)
 
 
 class LocalDevClient(BaseSqlClient):
@@ -210,6 +218,19 @@ def _validate_warehouse_db_url(db_url: str) -> None:
         )
 
     raise ValueError("SALES_WAREHOUSE_URL must use postgresql+psycopg:// (psycopg v3).")
+
+
+def _validate_warehouse_schema(schema: str) -> str:
+    normalized = schema.strip()
+    if not normalized:
+        raise ValueError("WAREHOUSE_SCHEMA is required when DATA_BACKEND=warehouse")
+
+    if not normalized.replace("_", "").isalnum():
+        raise ValueError(
+            "WAREHOUSE_SCHEMA must be a simple SQL identifier (letters, numbers, underscores)."
+        )
+
+    return normalized
 
 
 def _coerce_ts(value: object) -> pd.Timestamp | None:
